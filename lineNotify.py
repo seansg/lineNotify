@@ -4,21 +4,22 @@ import os
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from line_notify import LineNotify
+from decouple import config
 
-inMac = True
-
-#STOCKS_LINE_NOTIFY_TOKEN="t6SN1yTGZzmwDhsaKoVLD9N0ErS2KKpYS0G8d9EWPXW"
-#FUTURES_LINE_NOTIFY_TOKEN = "5rp7cILfzoW1TePtRtIUi6QZVY9fOGNpJAcwtyGH5w3"
+EXEC_MODE = config('EXEC_MODE') | 'WINDOWS'
 
 WATCH_DIR = ""
 dirs = []
+TOKEN = config('TOKEN')
+
+inMac = EXEC_MODE == 'MAC'
 
 if inMac:
     WATCH_DIR = "."
     dirs = [
         {
             'dir': f'{WATCH_DIR}/lineTest',
-            'token': "5rp7cILfzoW1TePtRtIUi6QZVY9fOGNpJAcwtyGH5w3" # sean person
+            'token': TOKEN
         }
     ]
 else:
