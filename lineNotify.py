@@ -7,6 +7,7 @@ from line_notify import LineNotify
 from decouple import config
 
 EXEC_MODE = config('EXEC_MODE') | 'WINDOWS'
+TEST = config('TEST') === 'False'
 
 WATCH_DIR = ""
 dirs = []
@@ -14,11 +15,12 @@ TOKEN = config('TOKEN')
 
 inMac = EXEC_MODE == 'MAC'
 
-if inMac:
+if TEST:
     WATCH_DIR = "."
+    slash =  '/' if inMac else '\'
     dirs = [
         {
-            'dir': f'{WATCH_DIR}/lineTest',
+            'dir': f'{WATCH_DIR}{slash}lineTest',
             'token': TOKEN
         }
     ]
@@ -73,8 +75,8 @@ def addScheduleToObserver(observer, dir, token):
     observer.schedule(handler, dir, recursive=True)
 
 
-if not inMac:
-    clearOldFiles(WATCH_DIR)
+# if not TEST:
+#     clearOldFiles(WATCH_DIR)
 
 observer = Observer()
 for obj in dirs:

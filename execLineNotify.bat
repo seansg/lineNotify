@@ -1,0 +1,2 @@
+@python lineNotify.py
+@pause
