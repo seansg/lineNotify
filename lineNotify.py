@@ -5,46 +5,16 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from line_notify import LineNotify
 from decouple import config
+import yaml
+import sys
 
-EXEC_MODE = config('EXEC_MODE') | 'WINDOWS'
-TEST = config('TEST') === 'False'
+is_windows = hasattr(sys, 'getwindowsversion')
+is_test = config('IS_TEST', default='True') == 'True'
 
-WATCH_DIR = ""
-dirs = []
-TOKEN = config('TOKEN')
+SLASH =  '\\' if is_windows else '/'
 
-inMac = EXEC_MODE == 'MAC'
-
-if TEST:
-    WATCH_DIR = "."
-    slash =  '/' if inMac else '\'
-    dirs = [
-        {
-            'dir': f'{WATCH_DIR}{slash}lineTest',
-            'token': TOKEN
-        }
-    ]
-else:
-    WATCH_DIR = r'D:\NotifyXQ\files'
-    dirs = [
-        {
-            'dir': f'{WATCH_DIR}\stocks',
-            'token': "IlkVWM4IPo9o7Z7kt7akhvrK4zYJup18AC9KgL1VxYv" # 個股
-        },
-        {
-            'dir': f'{WATCH_DIR}\\futures',
-            'token': "HsOEsZiDnYLuj0yt5ZHesoocucp4nU1E2aXvNwDkEOz" # 期貨
-        },
-        {
-            'dir': f'{WATCH_DIR}\\free',
-            'token': "p4BcmkxHrT0nnxFFzfIIYVTYLt2D1akSBJe8z0b2dNW" # 股期小幫手(維修版)
-        },
-        {
-            'dir': f'{WATCH_DIR}\\test',
-            'token': "ZL6FZlsIN332taAC4zQBdKWukcICISoZyv6sc73AIuB" # 除錯
-        }
-    ]
-
+def getDir(ary):
+    return SLASH.join(ary)
 
 def clearOldFiles(dir):
     print("check {0} exists: {1}".format(dir, os.path.exists(dir)))
@@ -69,25 +39,53 @@ class ObserverEventHandler(FileSystemEventHandler):
                 print(content)
                 self.line_notify.send(content)
 
-def addScheduleToObserver(observer, dir, token):
-    line_notify = LineNotify(token)
-    handler = ObserverEventHandler(line_notify)
-    observer.schedule(handler, dir, recursive=True)
+class XqLineNotify():
+    def __init__(self):
+        self.__load_setting()
+        self.__load_tokens()
+        self.observer = Observer()
 
+    def run(self):
+        self.__add_dirs_to_observer()
+        self.observer.start()
 
-# if not TEST:
-#     clearOldFiles(WATCH_DIR)
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            self.observer.stop()
 
-observer = Observer()
-for obj in dirs:
-    clearOldFiles(obj.get('dir'))
-    addScheduleToObserver(observer, obj.get('dir'), obj.get('token'))
-observer.start()
+        self.observer.join()
 
-try:
-    while True:
-        time.sleep(1)
-except KeyboardInterrupt:
-    observer.stop()
+    def __load_setting(self):
+        with open('settings.yml', 'r') as stream:
+            self.settings = yaml.load(stream, Loader=yaml.CLoader)
 
-observer.join()
+    def __load_tokens(self):
+        with open('tokens.yml', 'r') as stream:
+            self.tokens = yaml.load(stream, Loader=yaml.CLoader)
+
+    def generate_dirs(self, setting):
+        path = self.settings['base_dir'].copy()
+        path.append(setting.get('dir'))
+        return {
+            'dir': getDir(path),
+            'token': setting.get('token')
+        }
+
+    def __add_dirs_to_observer(self):
+        if is_windows == False or is_test == False:
+            dir = f'.{SLASH}lineTest'
+            clearOldFiles(dir)
+            self.__addScheduleToObserver(dir, config('TOKEN', default=''))
+        else:
+            for obj in list(map(self.generate_dirs, self.tokens)):
+                clearOldFiles(obj.get('dir'))
+                self.__addScheduleToObserver(obj.get('dir'), obj.get('token'))
+
+    def __addScheduleToObserver(self, dir, token):
+        line_notify = LineNotify(token)
+        handler = ObserverEventHandler(line_notify)
+        self.observer.schedule(handler, dir, recursive=True)
+
+XqLineNotify().run()

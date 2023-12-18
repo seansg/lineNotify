@@ -1,0 +1,8 @@
+- dir: stocks
+  token: IlkVWM4IPo9o7Z7kt7akhvrK4zYJup18AC9KgL1VxYv" # 個股
+- dir: futures
+  token: HsOEsZiDnYLuj0yt5ZHesoocucp4nU1E2aXvNwDkEOz" # 期貨
+- dir: futures
+  token: p4BcmkxHrT0nnxFFzfIIYVTYLt2D1akSBJe8z0b2dNW" # 股期小幫手(維修版)
+- dir: test
+  token: ZL6FZlsIN332taAC4zQBdKWukcICISoZyv6sc73AIuB" # 測試

@@ -1,1 +1,1 @@
-pip install watchdog line_notify python-decouple
+pip install watchdog line_notify python-decouple pyyaml
