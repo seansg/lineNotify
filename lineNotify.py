@@ -9,7 +9,7 @@ import yaml
 import sys
 
 is_windows = hasattr(sys, 'getwindowsversion')
-is_test = config('IS_TEST', default='True') == 'True'
+is_test = config('IS_TEST', default='False') == 'True'
 
 SLASH =  '\\' if is_windows else '/'
 
@@ -34,7 +34,7 @@ class ObserverEventHandler(FileSystemEventHandler):
         if event.is_directory:
             return
         else:
-            with open(event.src_path, 'r', encoding='UTF-8') as file:
+            with open(event.src_path, 'r', encoding='Big5') as file:
                 content = file.read()
                 print(content)
                 self.line_notify.send(content)
@@ -58,11 +58,11 @@ class XqLineNotify():
         self.observer.join()
 
     def __load_setting(self):
-        with open('settings.yml', 'r') as stream:
+        with open('settings.yml', 'r', encoding="utf-8") as stream:
             self.settings = yaml.load(stream, Loader=yaml.CLoader)
 
     def __load_tokens(self):
-        with open('tokens.yml', 'r') as stream:
+        with open('tokens.yml', 'r', encoding="utf-8") as stream:
             self.tokens = yaml.load(stream, Loader=yaml.CLoader)
 
     def generate_dirs(self, setting):
@@ -74,8 +74,8 @@ class XqLineNotify():
         }
 
     def __add_dirs_to_observer(self):
-        if is_windows == False or is_test == False:
-            dir = f'.{SLASH}lineTest'
+        if is_windows == False or is_test == True:
+            dir = ''
             clearOldFiles(dir)
             self.__addScheduleToObserver(dir, config('TOKEN', default=''))
         else:
